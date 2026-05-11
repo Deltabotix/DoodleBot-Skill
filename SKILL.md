@@ -1,24 +1,54 @@
 ---
 name: doodlebot
-description: Generate program.json files for the DoodleBot drawing robot. Use this skill whenever a user asks to make the bot draw a shape, write a word, blink colors, or run a sequence of moves. Output is a single JSON file the user can drop onto the bot's upload portal.
+description: Generate program.json files for the DoodleBot drawing robot. Use this skill whenever a user asks to make the bot draw a shape, write a word, blink colors, or run a sequence of moves. Output is a JSON file the user drops onto the bot, plus a p5.js preview the user can run in their browser to see how the bot will draw it.
 ---
 
 # DoodleBot Program Generator
 
-When a user asks you to create a program for the DoodleBot drawing robot, generate a **`program.json`** file.
-The bot interprets the JSON natively — there is no compilation step. The file must validate against the schema below.
-Instructions for the user appear at the end of this guide.
+## Core rule (every drawing request)
+
+When the user asks the bot to draw, animate, blink, or run any sequence
+of moves, **always produce TWO files in the same response**:
+
+1. **`program.json`** — the program the bot runs. Must validate against
+   the schema below.
+2. **`preview.js`** — a p5.js sketch that animates the bot's motion at
+   <https://editor.p5js.org/>. Built by taking `preview-template.js`
+   from this skill folder and replacing **only** the `PROGRAM` constant
+   with the JSON you generated. Don't modify the interpreter beneath.
+
+Emit both by default. Skip a file only if the user explicitly says
+*"just the json"* or *"skip the preview"*.
+
+The bot has no compilation step; both files are plain text the user
+copies and uses.
 
 ## Output rules
 
-1. Generate a **single JSON file named `program.json`**.
-2. The file must validate against the schema in this guide (see "Program structure" section).
-3. Keep total file size under **16 KB**.
-4. Keep total expanded ops under **2048** (loops count once per iteration).
-5. In your response to the user:
-   - Briefly describe what the program does.
-   - Provide the complete `program.json` content (inline or as a downloadable file).
-   - Include upload instructions: *Long-press the ★ Star button on the bot to enter upload mode, note the URL shown on the OLED, visit that URL on the user's device, and drag-drop the `program.json` file onto the upload portal.*
+1. Generate **`program.json`** AND **`preview.js`** for every drawing
+   request — see the Core rule above. Single-file output is the
+   exception, not the default.
+2. `program.json` must validate against the schema (see "Program
+   structure" section).
+3. Keep `program.json` under **16 KB**.
+4. Keep total expanded ops under **2048** (loops count once per
+   iteration).
+5. `preview.js` is the contents of `preview-template.js` with the
+   `PROGRAM` constant block replaced by your generated JSON. Nothing
+   else in the template should change — the interpreter matches the
+   bot's firmware semantics.
+6. In your response to the user:
+   - One-sentence summary of what the program does.
+   - Provide the `program.json` content (fenced JSON block, or a
+     downloadable file in agents that support it).
+   - Provide the `preview.js` content (fenced JS block).
+   - Include this instruction verbatim:
+     > **Preview first:** open <https://editor.p5js.org/>, paste
+     > `preview.js` into the sketch panel, click ▶. SPACE = pause,
+     > `+`/`-` = speed, `R` = restart, `E` = jump to final result.
+     > **When you're happy:** open the DoodleBot web app, go to the
+     > Program tab, drag `program.json` onto the drop zone. Press
+     > ✓ Tick on the bot or Play in the app.
 
 ## Program structure
 
@@ -106,10 +136,25 @@ Quote from these freely as prior art.
 ## User workflow
 
 1. User prompts you (Claude, Codex, ChatGPT, or another AI model): *"draw a snowflake"*
-2. You generate `program.json` and provide it to the user.
-3. User long-presses the ★ Star button on the bot to enter upload mode.
-4. User opens the upload URL (shown on the bot's OLED) on their device.
-5. User drags and drops `program.json` onto the web portal.
-6. Bot exits upload mode and executes the program when the user presses ✓ Tick.
+2. You generate **two files**: `program.json` and `preview.js`.
+3. **Preview** — user opens <https://editor.p5js.org/>, pastes `preview.js`, clicks ▶. They see the bot's path animate as if it were drawing on paper. Pause / speed / restart / jump-to-end controls are built into the preview.
+4. **Upload** — user opens the bot's web app (join WiFi `DoodleBot-XXXX` / password `doodle123`, browse to `http://192.168.4.1`, go to the Program tab) and drag-drops `program.json` onto the drop zone.
+5. Bot interprets the program; user presses ✓ Tick or the in-app Play to run it.
 
-**Key point**: The user carries the program on their own device; there is no internet connectivity required between the AI model and the bot.
+**Key point**: There is no internet between the AI model and the bot. The agent runs on the user's laptop/phone; the user is the courier.
+
+## Building `preview.js`
+
+The skill folder contains `preview-template.js`. Take that file verbatim and replace **only** the `PROGRAM` constant block with the program you generated. Do NOT modify the interpreter below it — it is calibrated to match the bot's firmware semantics (mm units, degree convention, arc geometry, loop expansion).
+
+Schematic of the replacement:
+
+```js
+// ▼▼▼ Replace this block with your program.json content ▼▼▼
+const PROGRAM = { /* your program here */ };
+// ▲▲▲ Replace the block above with your program.json content ▲▲▲
+
+// (... rest of template unchanged ...)
+```
+
+If the user has their `program.json` already, they can paste it in by hand. If you produce both files at once, embed the JSON directly so the preview is ready to run.

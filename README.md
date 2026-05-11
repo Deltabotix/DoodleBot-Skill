@@ -7,8 +7,19 @@ You type something like *"draw a six-pointed snowflake and turn the lights blue"
 
 ## What this skill produces
 
-A single file: `program.json`. Tiny JSON, validated against
-[`schema.json`](schema.json). Typical size: 200–2000 bytes.
+Two files per request:
+
+1. **`program.json`** — what the bot runs. Tiny JSON, validated against
+   [`schema.json`](schema.json). Typical size: 200–2000 bytes.
+2. **`preview.js`** — a [p5.js](https://p5js.org/) sketch you paste into
+   <https://editor.p5js.org/> to **see the bot move before you commit to
+   paper**. Same DSL, same units, deterministic. Pause / speed / restart /
+   jump-to-end built in.
+
+The preview catches the most common bot bugs (wrong turn direction,
+off-by-90° heading, total path too long) in seconds, before you've burned
+any paper or ink. Skip the preview if you trust the program — it's
+optional, never required for the bot.
 
 ```json
 {
@@ -25,45 +36,137 @@ A single file: `program.json`. Tiny JSON, validated against
 }
 ```
 
-## Install & Setup
+## Default behavior
 
-### Option 1: Claude Code (auto-discovery)
+Once installed in any agent, asking *"draw a flower"* (or any drawing
+prompt) automatically produces **both files together** — `program.json`
+for the bot and `preview.js` for the in-browser preview. You don't have
+to ask for the preview separately; the skill instructs the agent to
+emit both by default for every drawing request.
 
-If you're using Claude Code, the skill is auto-discoverable:
+If you only want one of them, say so: *"just the program.json, skip
+the preview"* or *"only the preview, I'll generate the program later"*.
+
+## Install
+
+The skill is just Markdown + JSON. Pick the path that matches your
+coding agent. Most agents read instruction files at session start — once
+the skill is in place, any drawing prompt triggers both files
+automatically.
+
+> Replace `https://github.com/Deltabotix/DoodleBot-Skill` below with
+> your actual repo URL if you forked.
+
+### Claude Code (auto-discovery)
+
+Drop the folder into `~/.claude/skills/`. Claude Code reads the
+frontmatter and loads the skill on demand.
 
 ```bash
-# Clone or download the skill folder, then move it into ~/.claude/skills/
 git clone https://github.com/Deltabotix/DoodleBot-Skill /tmp/doodlebot
 mkdir -p ~/.claude/skills
 cp -R /tmp/doodlebot/skills/doodlebot ~/.claude/skills/
-
-# Or symlink so updates propagate:
+# Or symlink so future git pulls propagate:
 ln -s /tmp/doodlebot/skills/doodlebot ~/.claude/skills/doodlebot
 ```
 
-Then in a Claude Code session, just ask:
+Then in any session: *"draw a snowflake for the doodlebot"* → both
+files appear in your working directory.
+
+### Cursor
+
+Add the skill content to your project's
+[**Rules for AI**](https://docs.cursor.com/context/rules) so every
+session in this repo sees it.
+
+```bash
+mkdir -p .cursor/rules
+curl -L https://github.com/Deltabotix/DoodleBot-Skill/raw/main/skills/doodlebot/SKILL.md \
+  -o .cursor/rules/doodlebot.md
+```
+
+Or in the Cursor UI: `Settings → Rules for AI` → paste the contents of
+[`SKILL.md`](SKILL.md). For the preview-emit step, also paste
+[`preview-template.js`](preview-template.js) as a second rule so Cursor
+has the template at hand.
+
+### GitHub Copilot Chat
+
+Copilot Chat reads `.github/copilot-instructions.md` from any repo.
+
+```bash
+mkdir -p .github
+curl -L https://github.com/Deltabotix/DoodleBot-Skill/raw/main/skills/doodlebot/SKILL.md \
+  -o .github/copilot-instructions.md
+```
+
+Then ask Copilot Chat *"draw a hexagon for doodlebot"* in any file of
+that repo.
+
+### Codex CLI (OpenAI codex / `codex` agent)
+
+Codex reads an `AGENTS.md` at the repo root.
+
+```bash
+curl -L https://github.com/Deltabotix/DoodleBot-Skill/raw/main/skills/doodlebot/SKILL.md \
+  -o AGENTS.md
+```
+
+You can also pass `--system-prompt-file ./SKILL.md` per-invocation.
+
+### ChatGPT (web) — Custom GPT
+
+1. <https://chat.openai.com/gpts/editor> → **Create a GPT**
+2. **Instructions** field → paste the contents of [`SKILL.md`](SKILL.md).
+3. **Knowledge** → upload [`schema.json`](schema.json),
+   [`preview-template.js`](preview-template.js), and the
+   [`examples/`](examples/) JSON files.
+4. **Capabilities** → leave Code Interpreter on (it lets the GPT
+   actually run AJV validation if asked).
+5. Save. Ask the GPT *"draw a star"* → it returns both files inline.
+
+### ChatGPT / Claude / any other chat — single-shot
+
+For one-off use without persisting instructions, paste this prelude
+before your prompt:
 
 ```
-draw a flower for the doodlebot
+You are using the DoodleBot skill. Whenever the user asks you to draw,
+animate, blink, or program a movement, output TWO files:
+1. program.json conforming to the schema below
+2. preview.js — the contents of the preview template below with
+   PROGRAM replaced by your generated program.
+
+<paste contents of SKILL.md here>
+<paste contents of schema.json here>
+<paste contents of preview-template.js here>
+
+Now: <your actual request>
 ```
 
-Claude Code picks up the skill automatically from the frontmatter.
+### Aider, Continue, Cline, Codeium Chat, etc.
 
-### Option 2: Any AI Model (Manual Setup)
+Any agent that supports an "always-attached" instructions file works the
+same way. Put [`SKILL.md`](SKILL.md) in the file the agent reads at
+session start. Typical locations:
 
-For Codex, ChatGPT, Cursor, Codeium, or any other AI model:
+| Agent | File |
+|---|---|
+| Aider | `.aider.conf.yml` → `read: ["SKILL.md"]` |
+| Continue (VS Code) | `~/.continue/config.json` → `systemMessage` |
+| Cline | `.clinerules/doodlebot.md` |
+| Codeium Chat | `.codeiumignore` doesn't help — paste into the Chat panel's "Knowledge" tab |
+| Roo Code | `.roo/rules/doodlebot.md` |
+| Goose | `~/.config/goose/system.md` |
 
-1. **Paste [`SKILL.md`](SKILL.md)** into the model's system prompt or custom instructions.
-2. **Optionally paste [`schema.json`](schema.json)** so the model can self-validate its output.
-3. **Optionally reference [`examples/`](examples/)** in your prompt for patterns (e.g., "similar to the snowflake example").
+If your tool isn't listed, find its "system prompt", "rules", or
+"instructions" mechanism — that's where SKILL.md goes.
 
-The skill is intentionally compact (~200 lines + examples) so it fits comfortably
-in any model's context window.
+### Direct integration (no agent at all)
 
-### Option 3: Direct Integration
-
-Copy the files into your own codebase or documentation system. The skill is plain
-Markdown + JSON with no dependencies.
+The skill is plain text. Read it, write a `program.json` by hand,
+upload. The bot doesn't care whether a human or an LLM produced the
+file. [`schema.json`](schema.json) tells you exactly what's allowed.
 
 ## DSL quick reference
 
@@ -133,9 +236,15 @@ with 8 points instead of 6"):
 | [square.json](examples/square.json) | Basic loop, pen-down/up, straight-line shape |
 | [hexagon.json](examples/hexagon.json) | Regular polygon via `n × forward + turn` |
 | [snowflake.json](examples/snowflake.json) | Loop with internal direction changes + LED + beep |
+| [snowflake.preview.js](examples/snowflake.preview.js) | The matching p5.js preview — paste into editor.p5js.org to see |
 | [smiley.json](examples/smiley.json) | Multi-stroke (face + eyes + smile arc) + arc op |
 | [name.json](examples/name.json) | Letter-style strokes using forward+turn |
 | [disco.json](examples/disco.json) | LED + beep program with no movement |
+
+The agent emits the preview by taking [`preview-template.js`](preview-template.js)
+and replacing only the `PROGRAM` constant. The interpreter below it is
+calibrated to match firmware semantics (mm, deg, arc geometry, loop
+expansion) so what you see in the preview is what the bot will draw.
 
 ## Tips for Prompting
 
