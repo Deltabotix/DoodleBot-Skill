@@ -1,12 +1,9 @@
-# DoodleBot Coding Agent Skill
+# DoodleBot AI Model Skill
 
-Make a coding agent (Claude Code, Codex, Cursor, Codeium, etc.) generate
-programs that a [DoodleBot drawing robot](https://github.com/garbhitsh/DoodleBot)
-can run on real paper.
+Generate programs for the [DoodleBot drawing robot](https://github.com/Deltabotix/DoodleBot-Skill)
+using any AI coding assistant (Claude, Codex, ChatGPT, Cursor, Codeium, etc.).
 
-You type something like *"draw a six-pointed snowflake and turn the
-lights blue"* — the agent emits a `program.json` file — you drag-drop
-that file onto the bot's web app — the bot runs it.
+You type something like *"draw a six-pointed snowflake and turn the lights blue"* — the AI model emits a `program.json` file — you drag-drop that file onto the bot's web app — the bot runs it.
 
 ## What this skill produces
 
@@ -28,13 +25,15 @@ A single file: `program.json`. Tiny JSON, validated against
 }
 ```
 
-## Install
+## Install & Setup
 
-### Claude Code
+### Option 1: Claude Code (auto-discovery)
+
+If you're using Claude Code, the skill is auto-discoverable:
 
 ```bash
-# Clone or download just the skill folder, then move it into ~/.claude/skills/
-git clone https://github.com/garbhitsh/DoodleBot.git /tmp/doodlebot
+# Clone or download the skill folder, then move it into ~/.claude/skills/
+git clone https://github.com/Deltabotix/DoodleBot-Skill /tmp/doodlebot
 mkdir -p ~/.claude/skills
 cp -R /tmp/doodlebot/skills/doodlebot ~/.claude/skills/
 
@@ -42,29 +41,29 @@ cp -R /tmp/doodlebot/skills/doodlebot ~/.claude/skills/
 ln -s /tmp/doodlebot/skills/doodlebot ~/.claude/skills/doodlebot
 ```
 
-Then in a Claude Code session, the skill is auto-discoverable. Just ask:
+Then in a Claude Code session, just ask:
 
 ```
 draw a flower for the doodlebot
 ```
 
-Claude Code picks up the skill from its name + description in the
-frontmatter and follows the instructions in `SKILL.md`.
+Claude Code picks up the skill automatically from the frontmatter.
 
-### Other agents (Codex, Cursor, Codeium, ChatGPT custom GPTs, etc.)
+### Option 2: Any AI Model (Manual Setup)
 
-The skill is plain Markdown + JSON. To use it elsewhere:
+For Codex, ChatGPT, Cursor, Codeium, or any other AI model:
 
-1. Paste the contents of [`SKILL.md`](SKILL.md) into the agent's system /
-   instructions prompt.
-2. Optionally paste [`schema.json`](schema.json) so the agent can
-   self-validate its output.
-3. Optionally paste one or two [`examples/`](examples/) files as
-   reference.
+1. **Paste [`SKILL.md`](SKILL.md)** into the model's system prompt or custom instructions.
+2. **Optionally paste [`schema.json`](schema.json)** so the model can self-validate its output.
+3. **Optionally reference [`examples/`](examples/)** in your prompt for patterns (e.g., "similar to the snowflake example").
 
-The skill is intentionally short (~150 lines of prose + 60 lines of
-schema + tiny examples) so it fits in any agent's context window with
-plenty of room left over.
+The skill is intentionally compact (~200 lines + examples) so it fits comfortably
+in any model's context window.
+
+### Option 3: Direct Integration
+
+Copy the files into your own codebase or documentation system. The skill is plain
+Markdown + JSON with no dependencies.
 
 ## DSL quick reference
 
@@ -85,41 +84,39 @@ What's deliberately **not** in v1: variables, expressions, conditionals,
 event handlers. The agent pre-computes everything, the bot's interpreter
 is small enough to fit comfortably alongside the firmware in ~8 KB.
 
-## Workflow
+## Workflow (All AI Models)
 
 ```
-┌─ 1. You prompt your agent ─────────────────────────────────────────┐
-│   "draw a snowflake"                                               │
+┌─ 1. You prompt your AI model ──────────────────────────────────────┐
+│   "draw a snowflake"                                              │
+│   (Works with Claude, Codex, ChatGPT, Cursor, etc.)               │
 └────────────────────────────────────────────────────────────────────┘
               │
               ▼
-┌─ 2. Agent writes program.json in your working directory ───────────┐
-│   $ ls                                                             │
-│   program.json                                                     │
+┌─ 2. AI model outputs program.json ─────────────────────────────────┐
+│   (Download from chat or copy the JSON content)                    │
+│   {"name": "snowflake", "version": 1, "ops": [...]}              │
 └────────────────────────────────────────────────────────────────────┘
               │
               ▼
-┌─ 3. You open the bot's web app ────────────────────────────────────┐
-│   • Join WiFi "DoodleBot-XXXX" (password: doodle123)               │
-│   • Browse to http://192.168.4.1                                   │
-│   • Tap the Program tab                                            │
-│   • Drag program.json onto the drop zone                           │
+┌─ 3. You access the bot's web app ──────────────────────────────────┐
+│   • Join WiFi "DoodleBot-XXXX" (password: doodle123)              │
+│   • Browse to http://192.168.4.1                                  │
+│   • Tap the Program tab                                           │
+│   • Drag program.json onto the drop zone                          │
 └────────────────────────────────────────────────────────────────────┘
               │
               ▼
-┌─ 4. Bot loads it, locks the drawing tabs ──────────────────────────┐
-│   The bot is now in "RUNNING PROGRAM" mode.                        │
-│   • Press the physical ✓ Tick button — bot draws.                  │
-│   • Or tap "Play" in the web app.                                  │
-│   • Tap "Delete" to return to default behavior.                    │
+┌─ 4. Bot executes the program ──────────────────────────────────────┐
+│   • Press the physical ✓ Tick button — bot draws                 │
+│   • Or tap "Play" in the web app                                  │
+│   • Tap "Delete" to return to default behavior                    │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Validation
 
-Programs are validated server-side by the bot (rejects unknown ops,
-nesting > 4, expanded op count > 2048). If you want to validate before
-uploading:
+Programs are validated server-side by the bot. If you want to validate locally:
 
 ```bash
 npm install -g ajv-cli
@@ -140,17 +137,16 @@ with 8 points instead of 6"):
 | [name.json](examples/name.json) | Letter-style strokes using forward+turn |
 | [disco.json](examples/disco.json) | LED + beep program with no movement |
 
-## Tips for writing your own prompts
+## Tips for Prompting
 
-- Be specific about size in millimeters if you care ("draw a 100 mm
-  square" beats "draw a square").
-- Tell the agent if you want a particular color: *"…and turn the
-  lights pink while it draws"*.
-- Multi-step programs work: *"draw a triangle, then beep three times,
-  then turn the lights off"*.
-- For complex shapes, ask the agent to first sketch the strokes verbally
-  in the chat and then emit the JSON — Claude generally produces tighter
-  geometry that way.
+Works with any AI model. Here are effective prompting patterns:
+
+- **Be specific about size**: *"draw a 100 mm square"* beats *"draw a square"*.
+- **Specify colors**: *"…and turn the lights pink while it draws"*.
+- **Chain operations**: *"draw a triangle, then beep three times, then turn the lights off"*.
+- **Request validation**: *"Generate the JSON and explain how the loop count is calculated"*.
+- **Use examples**: *"Similar to the snowflake example but with 8 points instead of 6"*.
+- **For complex geometry**: Ask the model to sketch the strokes in prose first, then emit JSON for tighter results.
 
 ## Limitations (v1)
 

@@ -1,0 +1,12 @@
+{
+  "name": "hexagon",
+  "version": 1,
+  "ops": [
+    {"op":"pen","down":true},
+    {"op":"loop","n":6,"body":[
+      {"op":"forward","mm":60},
+      {"op":"turn","deg":60,"right":true}
+    ]},
+    {"op":"pen","down":false}
+  ]
+}

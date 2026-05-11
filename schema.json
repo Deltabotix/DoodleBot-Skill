@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doodlebot.local/schema/program.json",
+  "title": "DoodleBot program",
+  "description": "v1 JSON DSL accepted by the DoodleBot script runtime",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "ops"],
+  "properties": {
+    "name": { "type": "string", "maxLength": 31 },
+    "version": { "const": 1 },
+    "ops": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/op" }
+    }
+  },
+  "$defs": {
+    "op": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["op", "mm"],
+          "properties": { "op": {"const":"forward"}, "mm": {"type":"integer","minimum":0,"maximum":1000}}
+        },
+        { "type": "object", "additionalProperties": false, "required": ["op", "mm"],
+          "properties": { "op": {"const":"reverse"}, "mm": {"type":"integer","minimum":0,"maximum":1000}}
+        },
+        { "type": "object", "additionalProperties": false, "required": ["op","deg","right"],
+          "properties": { "op": {"const":"turn"}, "deg":{"type":"integer","minimum":0,"maximum":360},
+                          "right": {"type":"boolean"}}
+        },
+        { "type": "object", "additionalProperties": false, "required": ["op","deg","radius_mm","right"],
+          "properties": { "op": {"const":"arc"}, "deg":{"type":"integer","minimum":0,"maximum":360},
+                          "radius_mm": {"type":"integer","minimum":0,"maximum":500},
+                          "right": {"type":"boolean"}}
+        },
+        { "type": "object", "additionalProperties": false, "required": ["op","down"],
+          "properties": { "op": {"const":"pen"}, "down": {"type":"boolean"}}
+        },
+        { "type": "object", "additionalProperties": false, "required": ["op","r","g","b"],
+          "properties": { "op": {"const":"led"}, "r": {"type":"integer","minimum":0,"maximum":255},
+                          "g": {"type":"integer","minimum":0,"maximum":255},
+                          "b": {"type":"integer","minimum":0,"maximum":255}}
+        },
+        { "type": "object", "additionalProperties": false, "required": ["op","hz","ms"],
+          "properties": { "op": {"const":"beep"}, "hz": {"type":"integer","minimum":50,"maximum":10000},
+                          "ms": {"type":"integer","minimum":10,"maximum":5000}}
+        },
+        { "type": "object", "additionalProperties": false, "required": ["op","ms"],
+          "properties": { "op": {"const":"wait"}, "ms": {"type":"integer","minimum":0,"maximum":60000}}
+        },
+        { "type": "object", "additionalProperties": false, "required": ["op","n","body"],
+          "properties": { "op": {"const":"loop"}, "n": {"type":"integer","minimum":0,"maximum":256},
+                          "body": {"type":"array","items": {"$ref":"#/$defs/op"}}}
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "doodle",
+  "version": 1,
+  "ops": [
+    {"op":"led","r":120,"g":80,"b":255},
+    {"op":"pen","down":true},
+
+    {"op":"loop","n":12,"body":[
+      {"op":"forward","mm":4},
+      {"op":"turn","deg":30,"right":true}
+    ]},
+    {"op":"pen","down":false},
+    {"op":"forward","mm":18},
+    {"op":"pen","down":true},
+
+    {"op":"loop","n":12,"body":[
+      {"op":"forward","mm":4},
+      {"op":"turn","deg":30,"right":true}
+    ]},
+    {"op":"pen","down":false},
+    {"op":"forward","mm":18},
+    {"op":"pen","down":true},
+
+    {"op":"loop","n":12,"body":[
+      {"op":"forward","mm":4},
+      {"op":"turn","deg":30,"right":true}
+    ]},
+    {"op":"pen","down":false},
+
+    {"op":"led","r":0,"g":255,"b":0},
+    {"op":"beep","hz":1200,"ms":120}
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "snowflake",
+  "version": 1,
+  "ops": [
+    {"op":"led","r":120,"g":160,"b":255},
+    {"op":"pen","down":true},
+    {"op":"loop","n":6,"body":[
+      {"op":"forward","mm":60},
+      {"op":"turn","deg":60,"right":true},
+      {"op":"forward","mm":30},
+      {"op":"turn","deg":120,"right":false},
+      {"op":"forward","mm":30},
+      {"op":"turn","deg":60,"right":true}
+    ]},
+    {"op":"pen","down":false},
+    {"op":"led","r":255,"g":255,"b":255},
+    {"op":"beep","hz":1400,"ms":120}
+  ]
+}
